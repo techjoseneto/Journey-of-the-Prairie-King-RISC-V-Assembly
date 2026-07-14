@@ -574,6 +574,27 @@ EXECUTA_DANO_INIMIGO:
 		li t1, 2
 		sw t1, 0(t0)
 		
+		#EFEITO SONORO DO INIMIGO TOMANDO DANO
+		addi sp, sp, -20
+		sw ra, 0(sp)
+		sw a0, 4(sp)
+		sw a1, 8(sp)
+		sw a2, 12(sp)
+		sw a3, 16(sp)
+		
+		li a0, 45         # Nota grave (impacto)
+		li a1, 250        # Duração de 250ms
+		li a2, 114        # Instrumento 114 (Steel Drum, bom para impacto)
+		li a3, 127        # Volume no máximo
+		call TOCA_EFEITO
+		
+		lw ra, 0(sp)
+		lw a0, 4(sp)
+		lw a1, 8(sp)
+		lw a2, 12(sp)
+		lw a3, 16(sp)
+		addi sp, sp, 20
+		
 		addi sp, sp, -4
 		sw ra, 0(sp)
 		call RESPAWN_INIMIGO
@@ -581,7 +602,6 @@ EXECUTA_DANO_INIMIGO:
 		addi sp, sp, 4
 		
 		j FIM_MOVE_BULLET		# Encerra o frame do tiro
-
 # -----------------------------------------------------------------
 #  COLISAO COM CENARIO E PAREDES
 # -----------------------------------------------------------------
@@ -862,6 +882,27 @@ TESTA_INIMIGO_B:
 # DANO
 # ------
 APLICA_DANO_LOGICA:
+		# EFEITO SONORO DO PLAYER TOMANDO DANO
+		addi sp, sp, -20
+		sw ra, 0(sp)
+		sw a0, 4(sp)
+		sw a1, 8(sp)
+		sw a2, 12(sp)
+		sw a3, 16(sp)
+		
+		li a0, 45         # Nota grave
+		li a1, 150        # Duração bem curta (150ms)
+		li a2, 81         # Instrumento 81
+		li a3, 127        # Volume máximo
+		call TOCA_EFEITO
+		
+		lw ra, 0(sp)
+		lw a0, 4(sp)
+		lw a1, 8(sp)
+		lw a2, 12(sp)
+		lw a3, 16(sp)
+		addi sp, sp, 20
+	
 		# Subtrai uma vida do jogador
 		la t0, PLAYER_LIVES
 		lw t1, 0(t0)
@@ -880,7 +921,6 @@ APLICA_DANO_LOGICA:
 		addi sp, sp, 4
 		
 		j TELA_GAME_OVER         # Vai para o fim do jogo definitivo
-
 CONTINUA_VIVO:
 		# Configura limpeza do fantasma da morte do Player
 		la t0, CHAR_POS
@@ -1670,4 +1710,22 @@ FIM_WAIT_MUSIC:
         lw s2, 12(sp)
         lw s3, 16(sp)
         addi sp, sp, 24
+        ret
+
+# =================================================================
+# TOCA EFEITO SONORO (Assíncrono, não trava o jogo)
+# a0 = Nota (Pitch)
+# a1 = Duração (ms)
+# a2 = Instrumento (0 a 127)
+# a3 = Volume (0 a 127)
+# =================================================================
+TOCA_EFEITO:
+        addi sp, sp, -4
+        sw a7, 0(sp)     # Salva a7 para não alterar as syscalls do resto do código
+        
+        li a7, 31        # Chamada MIDI Assíncrona
+        ecall
+        
+        lw a7, 0(sp)
+        addi sp, sp, 4
         ret
